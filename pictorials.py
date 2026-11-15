@@ -287,16 +287,17 @@ def fig_summary():
 
 
 def fig_ramp():
-    fig, ax = plt.subplots(figsize=(4.6, 2.5))
+    fig, ax = plt.subplots(figsize=(5.6, 2.6))
     t = np.array([0, 30, 60, 75])
     for pk, c, ls in zip([1.0, 1.15, 1.3, 1.5], [BLUE, ORANGE, AQUA, YELLOW], ["-", (0, (4, 1.5)), (0, (1, 1)), "-."]):
         ax.plot(t, [50, pk * 100, 50, 50], color=c, ls=ls, lw=1.6, label=f"peak {int(round(pk * 100))}%")
-    ax.axhline(100, color="#b9b8b2", lw=1.0, zorder=0)
-    ax.text(74.5, 102, "handling capacity", ha="right", fontsize=7, color=INK2)
-    ax.legend(frameon=False, fontsize=7, loc="upper right", handlelength=2.8)
+    ax.axhline(100, color="#b9b8b2", lw=1.0, zorder=0, label="handling capacity")
     ax.set_xlabel("time (minutes)"); ax.set_ylabel("demand (% of handling capacity)")
     ax.set_xlim(0, 75); ax.set_ylim(0, 170); ax.set_xticks([0, 15, 30, 45, 60, 75]); ax.grid(True, axis="y")
-    fig.tight_layout(); fig.savefig("figures/pic_ramp.pdf"); plt.close(fig)
+    # legend outside the plotting area, to the right
+    ax.legend(frameon=False, fontsize=7.5, loc="center left", bbox_to_anchor=(1.02, 0.5), handlelength=2.8,
+              borderaxespad=0.0)
+    fig.tight_layout(); fig.savefig("figures/pic_ramp.pdf", bbox_inches="tight"); plt.close(fig)
 
 
 if __name__ == "__main__":
