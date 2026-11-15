@@ -1,28 +1,449 @@
 \documentclass[preprint,12pt]{elsarticle}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
-\usepackage{amsmath,amssymb,booktabs,longtable,array,graphicx,xurl,enumitem}
+\usepackage{amsmath,amssymb,booktabs,array,graphicx,xurl,enumitem}
+\usepackage{algorithm,algpseudocode}
 \usepackage[colorlinks=true,allcolors=blue]{hyperref}
 \usepackage{microtype}
 \usepackage{geometry}
 \geometry{margin=24mm}
 \setlength{\emergencystretch}{3em}
+\newcommand{\pos}[1]{[#1]^{+}}
 \journal{Simulation Modelling Practice and Theory}
 \begin{document}
 \begin{frontmatter}
-\title{Priority boarding in lift groups: its cost to other passengers and a priority-aware destination control rule}
+\title{Priority boarding in lift group control: a simulation study of its cost to other passengers and of a priority-aware destination control rule}
 \author{Alan Immanuel Benjamin Vallavaraj (\texttt{a.vallavaraj@westminster.ac.uk})}
 \address{University of Westminster, London, United Kingdom}
 \begin{abstract}
-Some lift passengers, such as wheelchair users, should board before other people. This study measures what such a priority rule costs the other passengers, and proposes a way to make it work under destination control. We built an open lift simulator that works in seconds, with real car movement, door times and boarding times; its round-trip times agree with the classical formula within 2\%. Five group controllers, two boarding rules and two kinds of priority passenger were compared in 31,680 runs with identical passengers, for three buildings, steady demand from 50\% to 130\% of handling capacity and demand that rises and falls. Every counted passenger was watched for at least 900~s, so the average wait of all passengers, capped at 600~s, is exact. With call buttons, priority-first boarding costs other passengers at most 3.3~s below capacity and 1.8~s on average at capacity, where priority passengers gain 9.3~s; at 115\% of capacity the gain is 81~s and the cost 14~s. Wheelchair-like passengers, who take three places and board slowly, lower capacity for everyone, an effect several times larger than that of the boarding order. Under destination control, priority at the door has no effect up to capacity, because each passenger can board only one car. A new priority-aware rule that uses the priority label when choosing the car cuts the wait of priority passengers by 30\% to 43\% in normal operation, at a cost of 1 to 4~s for others, but is expensive in heavy overload. The usual average over served passengers ranks the controllers like the capped average in 659 of 660 comparisons.
+Passengers with access requirements, such as wheelchair users, may be given priority when boarding a lift. This study quantifies what such a policy costs other passengers and tests whether destination control can honour it. An open discrete-event lift simulator with explicit kinematics, door and transfer times is verified by automated tests and agrees with the classical up-peak round-trip time within 2\%. Five group controllers, two boarding rules and two priority-passenger profiles are compared in 31,680 paired runs covering three buildings, steady demand from 0.5 to 1.3 times the up-peak handling capacity and time-varying demand. Every measured passenger is followed for at least 900~s, so a waiting time capped at 600~s is observed exactly for all arrivals. With landing-call control, priority-first boarding changes other passengers' capped mean wait by at most 3.3~s in any cell below the reference demand; at the reference demand it adds 1.8~s (95\% interval 1.3 to 2.4) and saves priority passengers 9.3~s (8.0 to 10.7). Under destination control, priority at the door has no measurable effect up to the reference demand, because each passenger may board only the allocated car. A priority-aware allocation rule (DCS-P0) reduces priority passengers' wait by 30\% to 43\% there while adding 0.6 to 4.1~s for others, but under sustained overload (1.3 times the reference demand) it raises the all-passenger mean by 29.9~s. Passengers who need more space and time reduce capacity for everyone, an effect several times larger than that of boarding order. The served-passenger average ranks controllers like the capped mean in 659 of 660 comparisons.
 \end{abstract}
-\begin{keyword}lift group control \sep discrete-event simulation \sep handling capacity \sep restricted mean waiting time \sep priority boarding \sep accessibility\end{keyword}
+\begin{keyword}lift group control \sep destination control \sep discrete-event simulation \sep priority boarding \sep accessibility \sep restricted mean waiting time\end{keyword}
 \end{frontmatter}
 
-\input{body}
+\section{Introduction}\label{sec:intro}
+
+Lift group controllers are designed and compared by simulation. Design guidance treats simulation as a standard companion to the classical round-trip-time calculation \cite{cibse2025,iso8100,barney2016}, and research on group control relies on simulated waiting times to compare controllers \cite{siikonen1993,crites1998,utgoff2012,wan2024}.
+
+Some passengers have access requirements that make waiting and boarding harder, for example wheelchair users and people with reduced mobility. Accessibility of lifts is addressed by EN~81-70 \cite{en8170}, which concerns the design of the lift (for example car dimensions and controls). Whether such passengers should also be served ahead of others is a separate, operational question. Han et al.\ \cite{han2024} detect passengers with special needs by image analytics and schedule them with priority. What is missing is a systematic account of what a priority policy costs the other passengers, how that cost depends on demand and on the type of group control, and whether the policy works at all under destination control, where each passenger is allocated to one car before boarding.
+
+The simplest policy is \emph{priority-first boarding}: at a landing, passengers flagged for priority board before others. If a car has room for everyone, boarding order cannot change any waiting time; a cost to others can arise only when a car leaves passengers behind. For a work-conserving single-server queue, the conservation law states that a priority discipline redistributes waiting without changing a load-weighted total \cite{kleinrock1965,schrage1970}. A lift group is neither single-server nor work-conserving in this sense, because boarding order changes car loads, stops and routes, so the size of the effect has to be measured.
+
+Measuring it near and above handling capacity raises a methodological issue. Some passengers are still waiting when observation ends. An average over served passengers then omits those with the longest waits, and two policies that leave different numbers of people behind are compared on different populations. Survival analysis handles such censored outcomes with the restricted mean, an average of times capped at a fixed horizon \cite{royston2013}; simulation texts warn that the observation window shapes what an estimator measures \cite{law2015}.
+
+This paper addresses three questions.
+\begin{description}[leftmargin=2.2em,style=nextline,itemsep=1pt]
+\item[Q1] What does priority-first boarding cost other passengers and give priority passengers, as a function of demand, controller and the physical needs of the priority passenger?
+\item[Q2] Under destination control, does using the priority label in car allocation give priority passengers more than priority at the door, and at what cost to others?
+\item[Q3] Does the conventional served-passenger average rank controllers in the same order as a capped mean over all arrivals?
+\end{description}
+
+The contributions are as follows.
+\begin{enumerate}[itemsep=1pt]
+\item An open, seconds-based discrete-event simulator of a lift group with explicit kinematics, door and transfer times, passengers of different sizes, five group controllers and optional priority-first boarding, with automated verification tests and an analytic check against the classical up-peak round-trip time (Section~\ref{sec:vv}).
+\item A paired experimental design in which every measured passenger is followed for at least 900~s, so that a capped mean waiting time over all arrivals is observed without estimation (Section~\ref{sec:design}).
+\item A quantification of the cost and benefit of priority-first boarding across demand levels, traffic patterns, controllers and two priority-passenger profiles (Section~\ref{sec:res-prio}).
+\item The observation that priority at the door is ineffective under destination control below saturation, and a priority-aware allocation rule in two variants (DCS-P1, DCS-P0) with a fully specified algorithm, evaluated for benefit, cost, tail behaviour and overload (Sections~\ref{sec:dcsp} and~\ref{sec:res-dcs}--\ref{sec:res-fair}).
+\end{enumerate}
+We do not claim a new optimisation principle. DCS-P is a specific formulation within the familiar family of cost-based immediate allocation: it combines a class-dependent weight on the delay imposed on others with a class-dependent capacity test and immediate reallocation of displaced passengers (Section~\ref{sec:dcsp}). To our knowledge, its effect, and the ineffectiveness of door priority under destination control, have not been quantified in the open literature. All code, the test plan and run-level results are public \cite{dataset}; the model is reported following the STRESS-DES guidelines \cite{monks2019} (\ref{app:stress}). A plain-language summary and a glossary are given in \ref{app:plain}.
+
+\section{Related work}\label{sec:related}
+
+\paragraph{Traffic calculation and simulation} Classical design estimates the up-peak round-trip time (RTT) of a car from the expected number of stops and the highest reversal floor, and derives the interval and the five-minute handling capacity \cite{barney2016}. Al-Sharif et al.\ evaluate the RTT by Monte Carlo simulation under up-peak traffic and conventional control \cite{alsharif2012}. Simulation is part of current design guidance \cite{cibse2025,iso8100}. Siikonen's early simulation study describes the traffic model and control of a lift group simulator \cite{siikonen1993}.
+
+\paragraph{Group control} With conventional control a landing call (up or down) is allocated to a car. Published approaches include reinforcement learning \cite{crites1998,wan2024}, real-time combinatorial optimisation \cite{utgoff2012} and learning from real-time occupancy \cite{wang2021}. The estimated-time-to-destination (ETD) principle allocates a call by the new passenger's expected time to destination together with the delay imposed on passengers already allocated \cite{smith2002}. With destination control, passengers register their destination at the landing and are allocated to a car before boarding; the problem has been treated by AI planning \cite{koehler2002}, by exact optimisation for a single car \cite{tanaka2005} and with uncertain passenger arrivals \cite{sorsa2018}.
+
+\paragraph{Priority and fairness} Cameras have been used to adapt group control to the number of waiting passengers \cite{kimmoon2001} and to dispatch cars fairly as well as effectively \cite{yamauchi2019}. Han et al.\ identify passengers with special needs from images and schedule them with priority \cite{han2024}. In queueing theory, conservation laws constrain what any priority discipline can achieve in a single-server queue \cite{kleinrock1965,schrage1970}. Table~\ref{tab:related} positions the present study. It takes the priority label as given, and asks what the policy costs and where in the control loop the label has to be used.
+
+\begin{table}[htbp]\centering
+\caption{Directly related studies and the focus of the present one. Entries summarise the cited sources at the level of their stated scope.}\label{tab:related}
+\footnotesize
+\begin{tabular}{@{}p{.19\linewidth}p{.25\linewidth}p{.24\linewidth}p{.24\linewidth}@{}}
+\toprule Study & Passenger information used by the controller & Priority or fairness element & Relation to this study\\\midrule
+Kim and Moon \cite{kimmoon2001} & Camera-based passenger counts & None stated & Motivates the queue-aware baseline (ETDQ)\\
+Wang et al.\ \cite{wang2021} & Real-time occupancy, learned usage patterns & None stated & Motivates the queue-aware baseline (ETDQ)\\
+Yamauchi et al.\ \cite{yamauchi2019} & Camera-based information & Fairness of dispatching & Fairness between floors, not passenger classes\\
+Han et al.\ \cite{han2024} & Image-based detection of passengers with special needs & Priority scheduling of detected passengers & Closest work; we quantify cost to others and add destination control\\
+Sorsa et al.\ \cite{sorsa2018}, Koehler and Ottiger \cite{koehler2002}, Tanaka et al.\ \cite{tanaka2005} & Registered destinations & None stated & Destination control without passenger classes\\
+This study & Priority label (given); registered destinations or landing calls & Priority at the door; priority in allocation (DCS-P) & --\\
+\bottomrule\end{tabular}
+\end{table}
+
+\paragraph{Censored outcomes, verification and reporting} The restricted mean is identifiable whenever every subject is followed to the horizon \cite{royston2013}. Sargent distinguishes verification (the program implements the model) from validation (the model is adequate for its purpose) \cite{sargent2013}; we follow this distinction in Section~\ref{sec:vv}. The STRESS guidelines set out what a simulation study should report \cite{monks2019}.
+
+\section{Simulation model}\label{sec:model}
+
+\subsection{Lift group, buildings and kinematics}
+Figure~\ref{fig:system} shows the components. A building has a main lobby (floor 0) and $N$ floors above it, served by a group of identical cars. Three office buildings are modelled (Table~\ref{tab:buildings}), each with a single lobby and 50 occupants per upper floor; the interfloor height is $h=3.6$~m.
+
+\begin{figure}[htbp]\centering\includegraphics[width=.92\linewidth]{pic_system.pdf}
+\caption{Components of the modelled lift group (schematic: lobby and six floors, three cars). Arrows give the travel direction of each car; the figure marked P is a priority passenger.}\label{fig:system}\end{figure}
+
+\begin{table}[htbp]\centering
+\caption{Buildings. RTT, interval and five-minute handling capacity (HC5) follow from the classical up-peak calculation with cars loaded to the boarding limit.}\label{tab:buildings}
+\small
+\begin{tabular}{@{}lrrrrrrrrr@{}}
+\toprule
+ & $N$ & Cars & Rated & Limit $Q$ & $v$ & $a$ & RTT & Interval & HC5\\
+ & & & (persons) & (places) & (m/s) & (m/s$^2$) & (s) & (s) & (persons)\\\midrule
+B1 & 10 & 3 & 13 & 10 & 1.6 & 1.0 & 120.1 & 40.0 & 74.9\\
+B2 & 16 & 4 & 17 & 13 & 2.5 & 1.0 & 154.5 & 38.6 & 101.0\\
+B3 & 24 & 6 & 21 & 16 & 3.5 & 1.2 & 187.8 & 31.3 & 153.4\\
+\bottomrule
+\end{tabular}
+
+\smallskip\parbox{.97\linewidth}{\footnotesize Populations are 500, 800 and 1,200, so HC5 is 15.0\%, 12.6\% and 12.8\% of the population. $\mathrm{RTT}=2Ht_v+(S+1)t_s+2Pt_p$ with $P=Q$, $S=N\bigl(1-(1-1/N)^P\bigr)$, $H=N-\sum_{i=1}^{N-1}(i/N)^P$, $t_v=h/v$, $t_s=t_f(h)-t_v+t_o+t_c$ \cite{barney2016}; $\mathrm{HC5}=300\,P\,L/\mathrm{RTT}$ for $L$ cars.}
+\end{table}
+
+A car journey of length $D$ takes
+\begin{equation}
+t_f(D)=t_{sd}+\begin{cases} D/v + v/a, & D\ge v^2/a,\\ 2\sqrt{D/a}, & D<v^2/a,\end{cases}
+\label{eq:flight}
+\end{equation}
+with rated speed $v$, equal acceleration and deceleration $a$ and start delay $t_{sd}=0.5$~s; jerk is not modelled. Doors open in $t_o=2.0$~s and close in $t_c=3.0$~s. Each passenger transfer takes $t_p=1.2$~s; passengers alight and then board, one at a time. A car admits passengers up to a boarding limit $Q$ of 80\% of the rated load, the car loading assumed in up-peak calculation \cite{barney2016}. Figure~\ref{fig:stop} illustrates one journey and one stop.
+
+\begin{figure}[htbp]\centering\includegraphics[width=.92\linewidth]{pic_stop.pdf}
+\caption{One journey of three floors and one stop in building B1: car speed (top) and the sequence of events with their durations (bottom).}\label{fig:stop}\end{figure}
+
+\subsection{Demand and the reference demand level}\label{sec:demand}
+Passengers arrive singly as a Poisson process of rate $\lambda$. Each is incoming (lobby to a uniformly chosen upper floor), outgoing (upper floor to lobby) or interfloor (two distinct upper floors). The traffic patterns have incoming/outgoing/interfloor shares of 0.85/0.10/0.05 (up-peak), 0.40/0.40/0.20 (lunch) and 0.05/0.85/0.10 (down-peak). Demand is expressed as
+\begin{equation}
+x=\frac{300\,\lambda}{\mathrm{HC5}},
+\label{eq:load}
+\end{equation}
+the arrival rate relative to the classical up-peak handling capacity of Table~\ref{tab:buildings}. We call $x$ the \emph{demand level} and $x=1$ the \emph{reference demand}. The same normalisation is applied to all patterns so that they can be compared at equal passenger flow. It is a reference, not a saturation point: HC5 is derived for pure incoming traffic, collective control and cars filled to $Q$. Two-way traffic and destination control saturate at higher flows. In this study, lunch traffic still serves all measured passengers at $x=1.3$, and destination control passes $x=1$ with moderate waits (Section~\ref{sec:res-service}). We therefore describe conditions by their demand level and by observed service, and use ``overload'' only where waits grow through the run.
+
+Steady scenarios hold $\lambda$ constant. Time-varying scenarios use the up-peak mix with demand rising linearly from $x=0.5$ to a peak after 1,800~s, falling linearly to 0.5 at 3,600~s and remaining there (Figure~\ref{fig:ramp}).
+
+\begin{figure}[htbp]\centering\includegraphics[width=.55\linewidth]{pic_ramp.pdf}
+\caption{Time-varying demand scenarios with four peak levels.}\label{fig:ramp}\end{figure}
+
+\subsection{Passengers with priority}\label{sec:profiles}
+Each passenger receives an independent uniform draw $u_i$ from a random stream separate from the arrival stream, and is a priority passenger when $u_i<s$ for priority share $s$. Arrival times, origins and destinations are therefore identical for every share and boarding rule. Passenger $i$ occupies $s_i$ places and needs transfer time $t_{p,i}$. Two profiles are used in the main campaign.
+\begin{itemize}[itemsep=1pt]
+\item \emph{Simple priority} ($s=0.15$): $s_i=1$, $t_{p,i}=t_p$. The passenger is entitled to board first but has no additional physical needs.
+\item \emph{Wheelchair-like} ($s=0.05$): $s_i=3$ places, $t_{p,i}=3t_p=3.6$~s. These values are illustrative assumptions, not measurements, and are not meant to describe all wheelchair users. They represent a passenger who needs substantially more floor area and time than a standing passenger.
+\end{itemize}
+The two profiles differ in share and in physical properties; a supplementary experiment separates these factors (Section~\ref{sec:res-sens}). Priority-first boarding is an operational policy examined here. It is not a requirement of EN~81-70, and the model assumes that the label is known without error and that other passengers comply.
+
+\subsection{Car movement}
+Cars follow directional-collective logic. A car continues in its direction of travel while it has car calls or allocated landing stops ahead, stops at car calls and at allocated stops for its direction of travel, and at its farthest stop serves a call at that floor before reversing. A moving car accepts a new stop only at floors where it can still decelerate. An idle car returns to the lobby and can be reallocated on the way. While doors are open, passengers arriving at that landing for the serving direction board if they fit. A car at its boarding limit does not stop for landing calls. If the free space of a car is smaller than the space needed by the next waiting passenger, later passengers who fit may board.
+
+\subsection{Baseline controllers}\label{sec:controllers}
+All controllers share the car model and differ in allocation (Table~\ref{tab:controllers}). With landing-call control (NC, ETA, ETD, ETDQ) a registered call is allocated to one car; a passenger boards any car that opens at the landing for the right direction, and a car that cannot take the waiting passengers hands the call to another car. With destination control (DCS) each passenger is allocated to a car on arrival and boards only that car.
+
+\begin{table}[htbp]\centering
+\caption{Group controllers.}\label{tab:controllers}
+\small\begin{tabular}{@{}p{.12\linewidth}p{.82\linewidth}@{}}
+\toprule Name & Allocation rule\\\midrule
+NC & Nearest car: highest figure of suitability, $N+2-d$ for a car approaching in the call's direction, $N+1-d$ for an idle car or one approaching in the opposite direction, and 1 for a car moving away ($d$ = distance in floors).\\
+ETA & Minimum estimated time of arrival at the landing, from a plan of each car's stops using Eq.~\eqref{eq:flight} and dwell $t_o+t_c$ plus transfer times.\\
+ETD & ETA plus the delay the new stop imposes on every existing stop of the car, weighted by the passengers affected (one per landing call), following the ETD principle \cite{smith2002}.\\
+ETDQ & ETD with queue knowledge: the controller knows the number of passengers waiting behind each landing call. The arrival time and the delays are weighted by these numbers, 30~s is added per place the car is expected to lack, and a call is re-allocated when its queue grows.\\
+DCS & Destination control with immediate allocation, Eq.~\eqref{eq:cost} with $\alpha_i=1$ and $\Lambda_i=L_i$.\\
+DCS-P1, DCS-P0 & Priority-aware destination control (Section~\ref{sec:dcsp}).\\
+\bottomrule\end{tabular}
+\end{table}
+The baselines are transparent implementations of published principles, not reproductions of commercial dispatchers. ETDQ serves as a stronger landing-call baseline that uses the kind of occupancy information considered in \cite{kimmoon2001,wang2021}.
+
+\subsection{Priority-aware destination control (DCS-P)}\label{sec:dcsp}
+
+\paragraph{State and notation} At decision time $t$ the controller knows, for each car $c\in C$: its position, direction and door state; its load $\ell_c$ in places; the passengers on board with their destinations; and for each landing and direction $(f,\delta)$ the ordered list $A_c(f,\delta)$ of passengers allocated to $c$ and still waiting, in order of allocation. Passenger $i$ has origin $o_i$, destination $g_i$, direction $\delta_i$, size $s_i$ and priority flag $\pi_i\in\{0,1\}$.
+
+\paragraph{Route plan} For car $c$ the controller builds a plan: the sequence of stops implied by directional-collective movement for the car's car calls, pickups and the drop-off floors of passengers not yet on board, with estimated stop times $\tau_k$ from Eq.~\eqref{eq:flight} and a dwell of $t_o+t_c$ plus the transfer times of the passengers expected to alight or board. Each stop $k$ has a weight $w_k$, the number of passengers who alight or board there. The plan is built twice, without and with passenger $i$, giving stop times $\tau_k$ and $\tau'_k$, the estimated arrival time $T_i(c)$ of $i$ at $g_i$, and $L_i(c)$, the planned load of the car in places immediately after boarding at $i$'s pickup stop.
+
+\paragraph{Cost} Passenger $i$ is allocated to the car minimising
+\begin{equation}
+J_i(c)=\bigl(T_i(c)-t\bigr)+\alpha_i\sum_{k} w_k\,\pos{\tau'_k-\tau_k}+M\,\mathbf{1}\bigl[\Lambda_i(c)>Q\bigr]+\varepsilon\,\mathrm{idx}(c),
+\label{eq:cost}
+\end{equation}
+with $M=600$~s and $\varepsilon=10^{-6}$~s. The first term is the passenger's own estimated time to destination, the second the delay imposed on passengers already allocated to or travelling in the car, the third a penalty when the planned load exceeds the boarding limit, and the fourth breaks ties in favour of the lower car index. Standard DCS uses $\alpha_i=1$ and $\Lambda_i(c)=L_i(c)$ for every passenger.
+
+\paragraph{The two priority-aware elements} For a general passenger ($\pi_i=0$) DCS-P is identical to DCS. For a priority passenger:
+\begin{enumerate}[itemsep=1pt]
+\item \emph{Class-dependent capacity test.} General passengers allocated to the same car at the same pickup will board after the priority passenger, so they are not counted against the limit:
+\begin{equation}
+\Lambda_i(c)=L_i(c)-\sum_{j\in A_c(o_i,\delta_i),\ \pi_j=0}s_j .
+\label{eq:lambda}
+\end{equation}
+\item \emph{Class-dependent weight on others' delay.} $\alpha_i=1$ in DCS-P1 and $\alpha_i=0$ in DCS-P0.
+\end{enumerate}
+After the allocation to $c^\ast$, if $L_i(c^\ast)>Q$, general passengers are displaced at once: starting with the most recently allocated, passengers with $\pi_j=0$ are removed from $A_{c^\ast}(o_i,\delta_i)$ until the removed places reach $L_i(c^\ast)-Q$ or no general passenger remains at that pickup. Each displaced passenger is re-allocated by the standard rule over the other cars. Displacement does not cascade: a re-allocated general passenger displaces nobody. Algorithm~\ref{alg:dcsp} states the procedure.
+
+\begin{algorithm}[htbp]
+\caption{DCS-P allocation of an arriving passenger $i$ at time $t$ (DCS-P1: $\alpha^{P}=1$; DCS-P0: $\alpha^{P}=0$)}\label{alg:dcsp}
+\small
+\begin{algorithmic}[1]
+\Function{Allocate}{$i$, excluded car $e$ (optional)}
+\State $c^\ast\gets\varnothing$;\ $J^\ast\gets\infty$
+\ForAll{cars $c\in C$, $c\neq e$ (if $|C|>1$)}
+  \State build plan of $c$ without $i$: stop times $\tau_k$, weights $w_k$
+  \State build plan of $c$ with $i$: stop times $\tau'_k$, arrival $T_i(c)$, load $L_i(c)$
+  \State $\alpha\gets\alpha^{P}$ if $\pi_i=1$, else $1$
+  \State $\Lambda\gets L_i(c)-\sum_{j\in A_c(o_i,\delta_i),\,\pi_j=0}s_j$ if $\pi_i=1$, else $L_i(c)$
+  \State $J\gets T_i(c)-t+\alpha\sum_k w_k\pos{\tau'_k-\tau_k}+M\,\mathbf{1}[\Lambda>Q]+\varepsilon\,\mathrm{idx}(c)$
+  \If{$J<J^\ast$} $c^\ast\gets c$;\ $J^\ast\gets J$;\ $L^\ast\gets L_i(c)$ \EndIf
+\EndFor
+\State \Return $(c^\ast,L^\ast)$
+\EndFunction
+\Statex
+\Procedure{OnArrival}{$i$}
+\State $(c^\ast,L^\ast)\gets$ \Call{Allocate}{$i$};\ append $i$ to $A_{c^\ast}(o_i,\delta_i)$
+\If{$\pi_i=1$ \textbf{and} $L^\ast>Q$}
+  \State $E\gets L^\ast-Q$;\ $D\gets[\,]$
+  \While{$E>0$ \textbf{and} $A_{c^\ast}(o_i,\delta_i)$ contains a general passenger}
+     \State $j\gets$ most recently allocated general passenger in $A_{c^\ast}(o_i,\delta_i)$
+     \State remove $j$ from $A_{c^\ast}(o_i,\delta_i)$;\ append $j$ to $D$;\ $E\gets E-s_j$
+  \EndWhile
+  \ForAll{$j\in D$, earliest allocated first}
+     \State $(c',\cdot)\gets$ \Call{Allocate}{$j$, $c^\ast$};\ append $j$ to $A_{c'}(o_j,\delta_j)$
+  \EndFor
+\EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Operational rules shared with DCS} At a stop the passengers in $A_c(f,\delta)$ board in priority-first order (or in arrival order under FCFS), skipping any passenger who does not fit. When the doors close, passengers of that landing who could not board because the car is full, or because none of them fits, are re-allocated with \textsc{Allocate} excluding that car. If a plan does not reach a stop within its horizon, a fallback time of $10^4$~s is used, which makes that car unattractive.
+
+\paragraph{Relation to existing rules and complexity} Compared with DCS, DCS-P changes only the allocation of priority passengers and adds displacement. Compared with priority-first boarding, which acts when the doors open, DCS-P acts when the passenger registers. Weighting passenger classes differently in a dispatching cost is a known device; the specific elements here are the capacity test of Eq.~\eqref{eq:lambda} and immediate displacement, which together let a priority passenger take a place in the next suitable car without leaving a general passenger to discover this at the door. DCS-P1 and DCS-P0 are the two ends of one parameter, $\alpha^{P}\in[0,1]$. One allocation builds two plans per car. A plan handles at most $O(N)$ distinct stops and selects the next stop by a linear scan, so an allocation costs $O\bigl(|C|\,(N^2+m)\bigr)$ operations, where $m$ is the number of passengers currently allocated to or travelling in a car; a displacement adds one allocation per displaced passenger.
+
+\subsection{Boarding rules}
+Under first-come-first-served boarding (FCFS) waiting passengers board in arrival order. Under priority-first boarding (PFB) priority passengers board first in arrival order, then the others (Figure~\ref{fig:boarding}). With destination control only passengers allocated to the car are eligible. No baseline controller uses the priority label in allocation.
+
+\begin{figure}[htbp]\centering\includegraphics[width=.9\linewidth]{pic_boarding.pdf}
+\caption{The two boarding rules for a queue of five (numbers give arrival order; P is a priority passenger who arrived fourth) and a car with three free places.}\label{fig:boarding}\end{figure}
+
+\subsection{Implementation}
+The simulator is an event-driven Python program (Python 3.13, NumPy). Events are passenger arrival, car arrival at a floor, doors open, transfer end and doors closed; stale car-arrival events are invalidated by a version counter when a car is re-routed. Random numbers come from NumPy \texttt{SeedSequence} objects keyed by building, scenario and replication. The simulator and analysis programs were written with the assistance of generative AI coding tools (see the declaration at the end of the paper); their correctness rests on the tests and checks of Section~\ref{sec:vv} and on the released code, not on the tools.
+
+\section{Verification and validation}\label{sec:vv}
+Following Sargent \cite{sargent2013}, we separate verification from validation.
+
+\subsection{Verification}
+The released test suite contains 15 automated tests, all of which pass. They check the following.
+\begin{itemize}[itemsep=1pt]
+\item \emph{Kinematics.} Flight times equal the closed form of Eq.~\eqref{eq:flight} in both regimes; the deceleration point precedes arrival.
+\item \emph{Event timing.} For a single passenger the simulated boarding and alighting times equal hand calculations to floating-point precision, for a passenger at the lobby (wait 0; journey $t_o+t_p+t_c+t_f(5h)+t_o+t_p$), for a passenger five floors up (wait $t_f(5h)$) under every controller, and for a slow, three-place passenger.
+\item \emph{Capacity.} Eleven simultaneous passengers and a limit of ten: ten board and the eleventh waits for the car's return. In random runs the load in places never exceeds $Q$.
+\item \emph{Passenger logic.} Nobody boards before arriving, boards twice or alights without boarding; passengers board only cars serving their direction at their origin; destination-control passengers board only the allocated car and, under FCFS, in arrival order; at the end of a run, passengers waiting plus passengers boarded equal passengers arrived.
+\item \emph{Liveness.} In light traffic every passenger is served, and no car makes more than twelve consecutive floor arrivals without opening. This test was added after an earlier version of the direction rule was found to let a car skip a call at its reversal floor; all results in this paper were produced after the correction.
+\item \emph{Arrival process.} Counts match the Poisson mean, the traffic mix matches its specification, and streams are reproducible from their seed keys.
+\item \emph{Invariance.} FCFS results do not depend on the priority share; PFB with no priority passengers equals FCFS; DCS-P1 with no priority passengers equals DCS.
+\item \emph{Measures.} The outcome functions reproduce a hand-computed example with a censored passenger.
+\end{itemize}
+A separate check of 39,588 journeys found none shorter than the physical minimum implied by Eq.~\eqref{eq:flight}.
+
+\subsection{Validation against the classical round-trip time}
+The RTT formula in the note to Table~\ref{tab:buildings} was checked by hand for $N=2$, $P=1$ ($S=1$, $H=1.5$) in the test suite. For operational validation, pure incoming traffic at $x=1.3$ was simulated for five replications per building under NC and ETD, and the time between successive lobby departures of each car was recorded after 600~s. At this demand every recorded trip left the lobby at the boarding limit, the condition assumed by the calculation. Simulated means differ from the calculated RTT by $-0.2\%$ to $+1.9\%$ (Table~\ref{tab:rtt}). The largest differences occur in B3, whose cars do not reach rated speed over one floor, a case in which the formula is approximate \cite{barney2016,alsharif2012}. Since the handling capacity is defined from the RTT, this also checks the saturation throughput in pure up-peak traffic.
+
+\begin{table}[htbp]\centering
+\caption{Simulated and calculated up-peak round-trip time (s) at the boarding limit.}\label{tab:rtt}
+\small\begin{tabular}{@{}llrrrr@{}}
+\toprule Building & Controller & Trips & Simulated mean (SD) & Calculated & Difference\\\midrule
+\input{tables/tab_rtt}
+\end{tabular}
+\end{table}
+
+\subsection{Face validity and scope of validation}
+Figure~\ref{fig:traj} shows two runs of B1 in up-peak traffic under ETD. At $x=0.7$ the three cars cycle in turn, at most 16 passengers wait at any time, all 592 measured passengers are served and the capped mean wait is 15.6~s. At $x=1.3$ the cars leave full, the number waiting grows throughout the run to 325, 96\% of 1,068 measured passengers are served and the capped mean wait is 378~s. This is the qualitative behaviour expected below and above the handling capacity.
+
+\begin{figure}[htbp]\centering\includegraphics[width=\linewidth]{pic_trajectories.pdf}
+\caption{Two simulator runs (B1, up-peak, ETD, FCFS). Top: car positions over five minutes. Bottom: passengers waiting in the building over the run; the band marks the five minutes shown above.}\label{fig:traj}\end{figure}
+
+The validation is analytic and qualitative. No measured data from a real installation, and no independent published benchmark scenario with reference results, were available to us; the model has therefore not been validated empirically. Kinematic, door and transfer parameters are typical design values. The model is intended for comparing policies under common assumptions, not for predicting waiting times in a particular building.
+
+\section{Experimental design}\label{sec:design}
+
+\subsection{Main campaign}
+The main campaign crosses three buildings with 22 demand scenarios: three traffic patterns at six steady demand levels ($x=0.5$, 0.7, 0.85, 1.0, 1.15, 1.3) and four time-varying scenarios (peaks 1.0, 1.15, 1.3, 1.5), giving 66 situations. Each has 20 replications. The five baseline controllers are run in four modes: FCFS and PFB for the simple-priority profile, and FCFS and PFB for the wheelchair-like profile. DCS-P1 and DCS-P0 are run with PFB for both profiles. This gives $66\times20\times(5\times4+2\times2)=31{,}680$ runs. Within a situation and replication every controller and mode sees the identical passenger stream (common random numbers \cite{law2015}). The grid, outcomes and analyses were fixed in a protocol before execution, and no run was excluded. One correction was made after execution: under destination control with FCFS boarding, passengers had boarded in order of allocation to the car, which differs from arrival order for passengers re-allocated after being left behind. The rule was corrected to arrival order and the 2,640 affected runs (DCS with FCFS) were re-executed on the same passenger streams; this is recorded as an amendment to the protocol. Aggregated intervals were added at the same time. DCS-P and ETDQ were developed on separate pilot streams that are not part of the campaign.
+
+\subsection{Observation scheme and outcomes}\label{sec:outcomes}
+Passengers arrive during $[0,4500)$~s and the system is observed until $T=4500$~s. The measured cohort $\mathcal{P}$ contains passengers arriving in $[300,3600)$~s (Figure~\ref{fig:window}). The first 300~s allow cars, which start empty at the lobby, to distribute; arrivals continue after the measured window so that congestion does not ease artificially. Every measured passenger is followed for at least 900~s.
+
+\begin{figure}[htbp]\centering\includegraphics[width=.9\linewidth]{pic_window.pdf}
+\caption{Observation scheme and the treatment of waits in $R_{600}$.}\label{fig:window}\end{figure}
+
+For passenger $i$ with arrival time $a_i$ and boarding time $b_i$ (the instant the doors of the boarded car begin to open, or $a_i$ if the doors are already open), the observed wait is
+\begin{equation}
+W_i=\begin{cases} b_i-a_i, & b_i\le T,\\ T-a_i, & \text{otherwise.}\end{cases}
+\label{eq:wait}
+\end{equation}
+The primary outcome is the capped (restricted) mean waiting time
+\begin{equation}
+R_{h}=\frac{1}{|\mathcal{P}|}\sum_{i\in \mathcal{P}}\min(W_i,h),\qquad h=600~\text{s}.
+\label{eq:rmwt}
+\end{equation}
+Because $T-a_i\ge 900>h$ for every measured passenger, $\min(W_i,h)$ is known exactly whether or not the passenger boards; no estimation from censored data is needed. The conventional comparator is the served-passenger average
+\begin{equation}
+\mathrm{AWT}_{\mathrm{s}}=\frac{1}{|\mathcal{P}_b|}\sum_{i\in \mathcal{P}_b}W_i,\qquad \mathcal{P}_b=\{i\in \mathcal{P}: b_i\le T\}.
+\label{eq:awt}
+\end{equation}
+To separate exclusion of unserved passengers from capping, $R_{600}$ over served passengers only ($R_{600}^{\mathrm{s}}$) is also computed, as are $R_{300}$, $R_{900}$ and the served fraction. Outcomes are computed for all passengers, for priority passengers ($u_i<s$) and for the others ($u_i\ge s$); these groups are defined by the same draws under FCFS and PFB, so contrasts are paired passenger by passenger.
+
+$R_{600}$ has two limitations that matter for interpretation. It says nothing about how long waits beyond 600~s last, so under sustained overload, where many waits reach the cap, it understates differences between policies. And under steady demand above saturation the queue grows through the run, so levels of any waiting-time measure depend on the length of the measured window (Section~\ref{sec:res-agree}).
+
+\subsection{Statistical analysis}
+The unit of resampling is the replication. For a situation, controller pair or mode pair, the effect is the mean over the 20 replications of the paired difference. Aggregated effects are means over cells (building $\times$ scenario $\times$ controller). Intervals are 95\% percentile bootstrap intervals from 4,000 resamples: replications are resampled within each situation, with the same indices for every controller and mode of that situation (they share passenger streams) and independently across situations. An effect is called \emph{clear} when its interval excludes zero.
+
+The pre-specified primary comparisons are the aggregated effects by demand level for Q1 (Table~\ref{tab:prio}) and Q2 (Table~\ref{tab:dcs}), and the count of discordant controller pairs for Q3. Cell-level results (one per building, scenario and controller) are reported descriptively. Intervals are not adjusted for multiplicity; with this many comparisons, isolated cell-level intervals that just exclude zero should not be read as findings, and we base conclusions on aggregated effects, their size relative to baseline waits, and their consistency across demand levels. Intervals reflect replication variability in the model and say nothing about model error.
+
+\subsection{Supplementary experiments}\label{sec:supp}
+Two experiments were added after the main campaign had been analysed; they are exploratory and reported separately. Both reuse replications 0--9 of the main campaign's passenger streams under steady demand (8,730 runs).
+\begin{description}[leftmargin=2.2em,style=nextline,itemsep=1pt]
+\item[S1: distribution and overload] At $x=0.85$, 1.0, 1.15 and 1.3, simple-priority profile: ETDQ and DCS under FCFS and PFB, DCS-P1, DCS-P0 and an adaptive variant, DCS-PA, which applies DCS-P0 while the number of passengers waiting in the building is at most $\theta\,|C|\,Q$ and DCS-P1 otherwise ($\theta=0.5$, chosen on pilot streams from $\{0.5,1,2\}$). Additional outcomes are the share of passengers waiting more than 300~s and the 95th percentile of the wait. $R_{600}$ is also recomputed for measured windows $[600,3600)$ and $[300,3300)$.
+\item[S2: sensitivity] At $x=0.85$, 1.0 and 1.15 under ETD, DCS and DCS-P0: priority shares of 5\%, 10\% and 15\% for one-place passengers; and, at a share of 5\%, passengers needing three places only, three times the transfer time only, or both.
+\end{description}
+
+\section{Results}\label{sec:results}
+
+\subsection{Service levels under first-come-first-served boarding}\label{sec:res-service}
+Figure~\ref{fig:service} shows $R_{600}$ and $\mathrm{AWT}_{\mathrm{s}}$ for the steady scenarios. Averaged over buildings and controllers, up-peak $R_{600}$ is 9.6~s at $x=0.5$, 20.8~s at $x=0.85$, 48.8~s at $x=1$ and 360~s at $x=1.3$, where 96\% of measured passengers are served. Lunch traffic remains unsaturated on this scale (65.8~s at $x=1.3$, all served), and down-peak lies between (116.5~s, 97\% served). Averaged over patterns, ETA and ETDQ give the shortest waits at $x=0.5$ (14.7 and 15.0~s; ETD 15.5, DCS 18.9, NC 19.4). At $x=1$ ETDQ is best (38.8~s) and DCS second (41.5~s). Above it, destination control is clearly best in the mean (59.0~s at $x=1.15$ against 109 to 144~s; 118.4~s at $x=1.3$ against 167 to 222~s), consistent with the higher handling capacity generally attributed to it in incoming traffic \cite{barney2016,smith2002}. In the time-varying scenarios all measured passengers are served at every peak level, and $R_{600}$ averaged over controllers is 20.8, 40.1, 95.0 and 195.3~s for peaks of 1.0 to 1.5.
+
+\begin{figure}[htbp]\centering\includegraphics[width=\linewidth]{service_vs_load.pdf}
+\caption{Waiting time against demand level under FCFS boarding, one-place passengers; means of 20 replications, logarithmic vertical axis. Solid lines: $R_{600}$ over all measured passengers. Dashed lines: served-passenger average. The vertical line marks the reference demand $x=1$.}\label{fig:service}\end{figure}
+
+\subsection{Priority-first boarding with landing-call control (Q1)}\label{sec:res-prio}
+Table~\ref{tab:prio} gives the aggregated effects for the four landing-call controllers, and Figure~\ref{fig:summary} shows the steady-demand results for the simple-priority profile. Figure~\ref{fig:priority} gives the effects by traffic pattern for all five baseline controllers; destination control is discussed in Section~\ref{sec:res-dcs}.
+
+\begin{table}[htbp]\centering
+\caption{Priority-first minus FCFS boarding: change in $R_{600}$ (s) with 95\% paired-bootstrap interval, averaged over the four landing-call controllers (NC, ETA, ETD, ETDQ), three buildings and, for steady demand, three traffic patterns; 20 replications per cell.}\label{tab:prio}
+\footnotesize\begin{tabular}{@{}lrrrr@{}}
+\toprule & \multicolumn{2}{c}{Simple priority, share 15\%} & \multicolumn{2}{c}{Wheelchair-like, share 5\%}\\
+Demand & Others & Priority & Others & Priority\\\midrule
+\input{tables/tab_prio}
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]\centering\includegraphics[width=.85\linewidth]{pic_summary.pdf}
+\caption{Priority-first minus FCFS boarding, simple-priority profile, steady demand: the values of Table~\ref{tab:prio} (four landing-call controllers) with 95\% intervals.}\label{fig:summary}\end{figure}
+
+\emph{Below the reference demand} the policy is nearly neutral. At $x=0.85$ others wait 0.3~s longer and priority passengers 1.1~s less; the largest cost in any single building--pattern--controller cell at $x<1$ is 3.3~s. \emph{At the reference demand} others lose 1.8~s and priority passengers gain 9.3~s, 21\% of their FCFS wait. \emph{Above it} both grow: at $x=1.15$ others lose 14.5~s (11\% of their wait) and priority passengers gain 81.1~s (63\%). At $x=1.3$ the gain is 136.5~s, while the cost to others (9.7~s) is smaller than at $x=1.15$ because many of their waits already exceed the 600~s cap; this figure understates the cost, as noted in Section~\ref{sec:outcomes}. The change in $R_{600}$ over all passengers is at most 0.3~s up to $x=1.15$, so the policy mainly redistributes waiting, in line with the conservation law, although nothing forces exact conservation here.
+
+The cost arises where cars leave passengers behind. In steady up-peak traffic others lose 5.3~s (3.8 to 6.8) at $x=1$ and 40.2~s (36.6 to 43.8) at $x=1.15$; in lunch traffic at most 1.7~s at any level; in down-peak 3.1~s at $x=1.15$. A limited period above the reference demand is enough to produce a cost: in the time-varying scenarios others lose 0.9, 4.4, 14.6 and 31.4~s for peaks of 1.0 to 1.5, and priority passengers gain 2.5, 18.7, 76.0 and 186.1~s.
+
+For the wheelchair-like profile the pattern is the same and the gain to the priority passenger larger: at $x=1$ others lose 3.4~s and priority passengers gain 32.0~s (41\%). The profiles differ in share and in physical properties, so this comparison alone does not show which factor is responsible; Section~\ref{sec:res-sens} separates them. A distinct effect is much larger than that of boarding order: the mere presence of 5\% wheelchair-like passengers, under FCFS, raises $R_{600}$ of all passengers by 2.9~s (2.6 to 3.2) at $x=0.85$, 21.7~s (19.8 to 23.7) at $x=1$ and 39.9~s (38.1 to 41.9) at $x=1.15$, averaged over the five baseline controllers, because each car carries fewer people and dwells longer.
+
+\begin{figure}[htbp]\centering\includegraphics[width=\linewidth]{priority_cost.pdf}
+\caption{Priority-first minus FCFS boarding, simple-priority profile, steady demand, by traffic pattern and baseline controller (means over three buildings, 95\% intervals). Top: other passengers. Bottom: priority passengers.}\label{fig:priority}\end{figure}
+
+\subsection{Destination control and priority-aware allocation (Q2)}\label{sec:res-dcs}
+Table~\ref{tab:dcs} and Figure~\ref{fig:dcs} compare door priority, DCS-P1 and DCS-P0, each against DCS with FCFS boarding.
+
+\begin{table}[htbp]\centering
+\caption{Priority under destination control, simple-priority profile: change in $R_{600}$ (s) relative to DCS with FCFS boarding, with 95\% paired-bootstrap interval (three buildings; three patterns for steady demand; 20 replications per cell). (a) Other passengers, and all passengers for DCS-P0. (b) Priority passengers, and the DCS-P0 gain as a percentage of their FCFS wait.}\label{tab:dcs}
+\footnotesize
+(a)\\[2pt]
+\begin{tabular}{@{}lrrrr@{}}
+\toprule Demand & Door priority & DCS-P1 & DCS-P0 & DCS-P0, all passengers\\\midrule
+\input{tables/tab_dcs_others}
+\end{tabular}
+
+\medskip (b)\\[2pt]
+\begin{tabular}{@{}lrrrr@{}}
+\toprule Demand & Door priority & DCS-P1 & DCS-P0 & DCS-P0 gain\\\midrule
+\input{tables/tab_dcs_priority}
+\end{tabular}
+\end{table}
+
+\emph{Door priority is ineffective until destination control saturates.} Up to $x=1$ it changes no group's $R_{600}$ by more than 0.2~s in any cell. A passenger can board only the allocated car, and below saturation that car has room for everyone allocated to it. The same holds in the time-varying scenarios up to a peak of 1.15. Once saturated, door priority helps priority passengers less than under landing-call control (45.0~s at $x=1.3$, against 122 to 146~s for the four landing-call controllers), because the passenger still waits for one particular car.
+
+\emph{DCS-P1 changes little.} With the delay to others fully weighted, a priority passenger is rarely moved to an earlier car: the gain is 50.6~s at $x=1.3$ against 45.0~s for door priority.
+
+\emph{DCS-P0 helps priority passengers at every demand level.} Priority passengers gain 5.6, 10.2, 14.4 and 17.8~s at $x=0.5$, 0.7, 0.85 and 1.0, that is 30\%, 37\%, 41\% and 43\% of their wait under DCS with FCFS boarding. The gain is clear in all 36 cells at $x\le1$. Others lose 0.6, 1.7, 2.6 and 4.1~s, and the change over all passengers is at most 0.8~s. For the wheelchair-like profile the gains at $x\le1$ are 6.2 to 23.0~s and the costs to others 0.3 to 2.9~s. Among the policies tested, DCS-P0 is the only one that shortens priority passengers' waits appreciably at demand levels where a lift group is designed to operate. It does so by assigning the priority passenger to an earlier car, which adds stops; this is why others lose a few seconds even when no car is full.
+
+\emph{Under sustained overload DCS-P0 is costly.} At $x=1.15$ others lose 17.2~s for a priority gain of 26.6~s, and at $x=1.3$ they lose 46.8~s for a gain of 67.3~s. Because others are the large majority, the capped mean wait of all passengers rises by 10.7~s (8.6 to 12.8) and 29.9~s (26.6 to 33.3) respectively, compared with 1.2~s for door priority at $x=1.3$. At $x=1.3$ DCS-P0 therefore makes the system as a whole clearly worse. With time-varying demand the cost stays moderate up to a peak of 1.3 (others $+13.5$~s, priority $-20.4$~s, all passengers $+8.5$~s).
+
+\begin{figure}[htbp]\centering\includegraphics[width=\linewidth]{dcs_priority.pdf}
+\caption{Priority under destination control in up-peak traffic, simple-priority profile, with 95\% intervals. Destination-control variants are compared with DCS under FCFS boarding. For reference, the dashed line shows door priority under ETDQ compared with ETDQ under FCFS boarding. Left: steady demand. Right: time-varying demand.}\label{fig:dcs}\end{figure}
+
+\subsection{Distribution of waits, overload and an adaptive variant (S1)}\label{sec:res-fair}
+Table~\ref{tab:s1} reports the supplementary experiment S1. At the reference demand DCS-P0 leaves the tail of the distribution almost unchanged: nobody waits more than 300~s under any variant, and the 95th percentile of the wait rises by 10.7~s for others (from 95.8~s) and falls by 26.2~s for priority passengers.
+
+Under sustained overload the picture changes. At $x=1.3$, 10.9\% of general passengers wait more than 300~s under DCS with FCFS boarding. Door priority raises this by 2.0 percentage points and DCS-P0 by 7.6 points, so that nearly one general passenger in five waits more than five minutes; the 95th percentile of their wait rises from 312~s to 588~s. Priority passengers are spared almost entirely (their share above 300~s falls by about ten points under every variant). No group is left unserved in large numbers: under every destination-control variant at least 98.9\% of each group boards within the observation period. The disadvantage to general passengers under DCS-P0 is therefore one of long waits, concentrated in sustained overload, not of exclusion.
+
+\begin{table}[htbp]\centering
+\caption{Supplementary experiment S1 (steady demand, simple-priority profile, 10 replications per cell): change relative to FCFS boarding under the same family of controller (ETDQ for the first row of each block, DCS otherwise). $R_{600}$ in seconds with 95\% interval; last two columns: change in the share of passengers waiting more than 300~s, in percentage points.}\label{tab:s1}
+\footnotesize\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule & & \multicolumn{3}{c}{Change in $R_{600}$ (s)} & \multicolumn{2}{c}{$>300$~s (points)}\\
+$x$ & Policy & Others & Priority & All & Others & Priority\\\midrule
+\input{tables/tab_s1}
+\end{tabular}
+\end{table}
+
+The adaptive variant DCS-PA is an exploratory extension, not part of the pre-specified contribution. It retains the benefit of DCS-P0 at the reference demand (priority $-17.4$~s, others $+3.6$~s) and reduces the overload cost: at $x=1.15$ others lose 8.5~s instead of 17.2~s while priority passengers still gain 22.5~s, and the all-passenger mean rises by 3.9~s instead of 10.5~s. At $x=1.3$ it lies between DCS-P1 and DCS-P0 (all passengers $+14.5$~s against $+3.7$ and $+32.4$~s). Its threshold was chosen on pilot streams and has not been studied further.
+
+\subsection{Sensitivity to priority share and passenger properties (S2)}\label{sec:res-sens}
+Table~\ref{tab:s2a} separates the priority share from the passenger's physical properties. With one-place passengers, the cost to others grows roughly in proportion to the share (ETD at $x=1.15$: 3.8, 8.5 and 13.4~s for 5\%, 10\% and 15\%), while the gain per priority passenger is almost independent of it (87.1, 83.9 and 84.0~s). The same holds for DCS-P0 at the reference demand: the cost to others is 1.3, 2.6 and 4.2~s, and the gain 21.6, 19.6 and 17.7~s.
+
+\begin{table}[htbp]\centering
+\caption{Supplementary experiment S2: effect of the priority share for one-place priority passengers. Change in $R_{600}$ (s) relative to FCFS boarding (DCS-P0 relative to DCS with FCFS), 95\% interval; 10 replications per cell.}\label{tab:s2a}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule & & \multicolumn{2}{c}{$x=1.0$} & \multicolumn{2}{c}{$x=1.15$}\\
+Policy & Share & Others & Priority & Others & Priority\\\midrule
+\input{tables/tab_s2_share}
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:s2b} separates space from time at a fixed share of 5\% under ETD. The capacity effect of such passengers is driven mainly by space: at $x=1$ their presence raises $R_{600}$ of all passengers by 13.7~s for space alone, 5.4~s for time alone and 22.3~s for both. The benefit of priority boarding is also larger when the passenger needs more space (at $x=1.15$: 111.4~s for space only against 87.1~s for a one-place passenger at the same share), because a passenger who needs three places is otherwise often unable to enter a nearly full car. The larger gain of the wheelchair-like profile in Table~\ref{tab:prio} is therefore attributable to the space requirement, not to the lower share.
+
+\begin{table}[htbp]\centering
+\caption{Supplementary experiment S2: space and time requirements at a priority share of 5\% under ETD. Change in $R_{600}$ (s), 95\% interval; 10 replications per cell. ``Presence'' compares FCFS with such passengers against FCFS with one-place passengers only (all passengers); the last two columns give priority-first minus FCFS boarding at $x=1.15$.}\label{tab:s2b}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule & \multicolumn{2}{c}{Presence, all passengers} & \multicolumn{2}{c}{Priority boarding, $x=1.15$}\\
+Priority passenger needs & $x=1.0$ & $x=1.15$ & Others & Priority\\\midrule
+\input{tables/tab_s2_prop}
+\end{tabular}
+\end{table}
+
+\subsection{Agreement of waiting-time measures and window sensitivity (Q3)}\label{sec:res-agree}
+For the five baseline controllers under FCFS there are $66\times10=660$ controller-pair comparisons. $\mathrm{AWT}_{\mathrm{s}}$ and $R_{600}$ order the two controllers differently in one of them (B2, lunch, $x=1.3$, NC against ETA, where both differences are below 0.5~s), and in none are both differences clear (Table~\ref{tab:disc}). $R_{600}$ itself separates the pair clearly in 566 of the 660 comparisons. With a 300~s cap the served average disagrees in ten comparisons, all at $x\ge1.15$ and none clear.
+
+\begin{table}[htbp]\centering
+\caption{Controller pairs for which two measures order the controllers differently; in brackets, pairs for which both differences are clear.}\label{tab:disc}
+\small\begin{tabular}{@{}lrrrrr@{}}
+\toprule Demand & Pairs & $\mathrm{AWT}_{\mathrm{s}}$ & $R_{600}^{\mathrm{s}}$ & $\mathrm{AWT}_{\mathrm{s}}$ & $R_{300}$\\
+ & & vs $R_{600}$ & vs $R_{600}$ & vs $R_{300}$ & vs $R_{900}$\\\midrule
+\input{tables/tab_agree}
+\end{tabular}
+\end{table}
+
+The rankings agree because the design leaves few passengers unserved: arrivals continue after the measured window and every measured passenger is followed for 900~s, so at $x=1.3$ in up-peak traffic 96\% of the cohort is served. Levels are another matter. In that scenario $\mathrm{AWT}_{\mathrm{s}}$ is 431~s against 360~s for $R_{600}$. Levels under sustained overload also depend on the measured window, as they must when the queue grows through the run: in S1, starting the window at 600~s instead of 300~s changes $R_{600}$ by at most 0.6~s at $x\le1$, but by $+6.1$~s (5\%) for ETDQ at $x=1.15$ and $+10.0$~s (6\%) at $x=1.3$. Results at $x>1$ under steady demand are therefore specific to the 55-minute measured window, whereas results at $x\le1$ and paired differences between policies are insensitive to it.
+
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Answers to the research questions}
+\emph{Q1.} With landing-call control, priority-first boarding costs other passengers little as long as the group is not saturated: at most 3.3~s in any cell below the reference demand and 1.8~s on average at it. It then yields a moderate gain for priority passengers (9.3~s). Its value lies in busy periods, where gains are large; a peak of 1.15 times the reference demand lasting part of an hour gives priority passengers 18.7~s for a cost of 4.4~s to others. The cost to others scales with the share of priority passengers.
+
+\emph{Q2.} Under destination control, priority at the door has no effect below saturation and a weak effect above it. Using the label in allocation works: DCS-P0 reduces priority passengers' waits by 30\% to 43\% at $x\le1$ at a cost of 0.6 to 4.1~s to others and no appreciable change in the all-passenger mean. It is not a uniformly better controller. Under sustained overload it raises the all-passenger capped mean by 29.9~s at $x=1.3$ and increases the share of general passengers waiting more than five minutes from 11\% to 18\%. DCS-P0 is suitable where demand stays at or below the level at which destination control saturates, and unsuitable as a fixed setting where long overload periods occur. An adaptive rule that falls back to DCS-P1 when many passengers are waiting halved the overload cost in an exploratory test; this direction needs a dedicated study.
+
+\emph{Q3.} In this design the served-passenger average and the all-arrival capped mean rank controllers alike. The capped mean is still the safer primary outcome above saturation, because it is defined for every arrival and its value does not depend on how many passengers happen to be served.
+
+\subsection{Implications}
+Two points follow for practice. First, an operator of a landing-call system can adopt priority boarding as an access policy knowing that its cost to others is confined to saturated periods and is proportional to the number of priority passengers. Second, an operator of a destination-control system should not expect a boarding rule to help: the priority label has to enter the allocation. A further point concerns planning: passengers who need three places reduce handling capacity for everyone by an amount several times larger than any effect of boarding order (21.7~s against 3.4~s at the reference demand), and this is driven by space more than by transfer time. Where such passengers are expected in numbers, capacity planning should count them in places, not in persons. These statements rest on a model with illustrative parameters and indicate direction and relative size, not design values.
+
+\subsection{Limitations}
+\begin{itemize}[itemsep=1pt]
+\item \emph{No empirical validation.} The model is verified and checked against classical theory, but not against measured data or an independent published benchmark.
+\item \emph{Baselines.} The controllers are transparent implementations of published principles. Commercial dispatchers and learning-based controllers \cite{crites1998,wan2024,wang2021} were not implemented.
+\item \emph{Traffic and buildings.} Single lobby, equal floor populations, single arrivals, no zoning; steady demand or one simple time-varying profile.
+\item \emph{Priority passengers.} The label is assumed known and correct, and compliance with boarding order is assumed. The wheelchair-like profile uses illustrative values for space and time and represents only one kind of access requirement.
+\item \emph{Measure and window.} $R_{600}$ does not describe waits beyond 600~s and understates effects where many waits reach the cap; levels at $x>1$ under steady demand depend on the measured window.
+\item \emph{Parameters of DCS-P.} Only $\alpha^{P}\in\{0,1\}$ and one adaptive threshold were examined. The penalty $M$ and the ETDQ parameters were fixed on pilot streams without sensitivity analysis.
+\item \emph{Inference.} Twenty replications per cell (ten in the supplementary experiments); intervals are unadjusted for multiplicity and reflect replication variability only. The supplementary experiments are exploratory.
+\end{itemize}
+
+\section{Conclusions}\label{sec:conclusions}
+A verified, seconds-based lift group simulator was used to compare five group controllers, two boarding rules and two priority-passenger profiles in 31,680 paired runs, with every measured passenger followed long enough for a 600~s capped wait to be observed exactly.
+
+Priority-first boarding under landing-call control costs other passengers at most 3.3~s in any cell below the reference demand, 1.8~s on average at it and 14.5~s at 1.15 times it, while priority passengers gain 9.3~s and 81.1~s respectively. Under destination control the same boarding rule has no measurable effect up to the reference demand. A priority-aware allocation rule, DCS-P0, reduces priority passengers' waits there by 30\% to 43\% for a cost of 0.6 to 4.1~s to others, but under sustained overload it raises the all-passenger mean substantially and should not be used as a fixed setting in such conditions. Passengers who need more space lower capacity for all by considerably more than boarding order changes anyone's wait. The served-passenger average and the capped mean ranked controllers identically in 659 of 660 comparisons.
+
+Further work should validate the model against measured traffic, examine intermediate and adaptive settings of the allocation weight, and test the policies against stronger dispatchers.
 
 \section*{Data and code availability}
-The protocol, simulator, automated tests, campaign and analysis scripts, run-level results for all 31,680 runs, contrast tables and figures are archived in a public repository with a persistent identifier \cite{dataset}; \url{https://github.com/alanvallavaraj/liftsim}. Code is released under the MIT licence and data under the Creative Commons Attribution 4.0 licence. All records are synthetic simulation outputs; no human-participant data were collected.
+The simulator, automated tests, test plan, campaign and analysis programs, run-level results of the main campaign (31,680 runs) and of the supplementary experiments (8,730 runs), and the programs that generate every table and figure are available at \url{https://github.com/alanvallavaraj/liftsim} \cite{dataset} under the MIT licence (code) and CC BY 4.0 (data). All data are synthetic simulation outputs; no human participants were involved.
 
 \section*{Funding}
 This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
@@ -30,9 +451,9 @@ This research did not receive any specific grant from funding agencies in the pu
 \section*{Declaration of competing interests}
 The author declares no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 
-\section*{Declaration of generative AI and AI-assisted technologies}
-%% DRAFT FOR THE AUTHOR TO REVIEW AND EDIT BEFORE SUBMISSION.
-During the preparation of this work the author used Claude (Anthropic) to assist with implementing the simulator, running the simulation campaign and analysis scripts, and drafting and editing the manuscript. The author reviewed and verified the code, results and text, edited the content as needed, and takes full responsibility for the content of the publication.
+\section*{Declaration of generative AI and AI-assisted technologies in the writing process}
+%% AUTHOR TO CONFIRM BEFORE SUBMISSION: the role of each tool below must match actual use.
+During the preparation of this work the author used Claude (Anthropic) and ChatGPT (OpenAI) to draft and edit text and to review the manuscript. Claude was also used in the research process to assist in writing the simulator and analysis programs and in running the experiments, as stated in Section~\ref{sec:model}; these programs are verified by the automated tests and checks described in Section~\ref{sec:vv}, and the code and run-level results are public. After using these tools the author reviewed and edited the content as needed and takes full responsibility for the content of the published article.
 
 \bibliographystyle{elsarticle-num}\bibliography{references}
 \clearpage\appendix

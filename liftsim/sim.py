@@ -69,13 +69,16 @@ class Sim:
     def __init__(self, b: Building, controller: str, arrivals: dict, t_end: float,
                  priority_share: float = 0.0, priority_boarding: bool = False,
                  homing: bool = True, log_trips: bool = False, debug: bool = False,
-                 pri_size: int = 1, pri_tp_factor: float = 1.0):
-        if controller not in ("NC", "ETA", "ETD", "ETDQ", "DCS", "DCSP1", "DCSP0"):
+                 pri_size: int = 1, pri_tp_factor: float = 1.0, theta: float = 1.0):
+        if controller not in ("NC", "ETA", "ETD", "ETDQ", "DCS", "DCSP1", "DCSP0", "DCSPA"):
             raise ValueError(controller)
         self.b = b
         self.ctrl = controller
-        self.dcs = controller in ("DCS", "DCSP1", "DCSP0")
-        self.dcsp = controller in ("DCSP1", "DCSP0")
+        self.dcs = controller in ("DCS", "DCSP1", "DCSP0", "DCSPA")
+        self.dcsp = controller in ("DCSP1", "DCSP0", "DCSPA")
+        self.adaptive = controller == "DCSPA"
+        self.theta = theta
+        self.nwait = 0
         self.dcsp_alpha = 0.0 if controller == "DCSP0" else 1.0
         self.etdq = controller == "ETDQ"
         self.t_end = float(t_end)
@@ -150,6 +153,7 @@ class Sim:
         f, g = self.ao[i], self.ad[i]
         d = UP if g > f else DOWN
         self.queue[f][_di(d)].append(i)
+        self.nwait += 1
         if self.dcs:
             c, load_x = self._alloc_dcs(i)
             self._give_pickup(i, c)
@@ -485,6 +489,11 @@ class Sim:
             pri = self.pri
             at = self.atl
             cand = sorted(cand, key=lambda p: (not pri[p], at[p], p))
+        elif self.dcs:
+            # first come, first served means arrival order, also for passengers who were
+            # re-allocated to this car after being left behind by another one
+            at = self.atl
+            cand = sorted(cand, key=lambda p: (at[p], p))
         size = self.size
         free = self.cap - c.load
         take = []
@@ -503,6 +512,7 @@ class Sim:
         for p in take:
             self.board_t[p] = max(self.atl[p], c.open_t)
             c.onboard.append(p)
+            self.nwait -= 1
             c.load += size[p]
             g = self.ad[p]
             c.ndest[g] += 1
@@ -818,7 +828,14 @@ class Sim:
             tp = new.get(("x", f, d), self.now + 1e4)
             tdrop = new.get(("xd", g), tp + 1e4)
             cost = tdrop - self.now
-            alpha = self.dcsp_alpha if prio else 1.0
+            if not prio:
+                alpha = 1.0
+            elif self.adaptive:
+                # exploratory extension: strong priority only while the number of people
+                # waiting in the building is below theta x total boarding capacity
+                alpha = 0.0 if self.nwait <= self.theta * self.cap * len(self.cars) else 1.0
+            else:
+                alpha = self.dcsp_alpha
             if alpha:
                 for k, t0 in base.items():
                     t1 = new.get(k, t0)

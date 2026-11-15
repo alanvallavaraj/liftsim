@@ -1,22 +1,48 @@
 \section{STRESS-DES reporting summary}\label{app:stress}
 \setcounter{table}{0}\renewcommand{\thetable}{A.\arabic{table}}\renewcommand{\theHtable}{A.\arabic{table}}
+Table~\ref{tab:stress} maps the STRESS-DES items \cite{monks2019} to this paper and the released materials \cite{dataset}.
 
-Table~\ref{tab:stress} maps the STRESS-DES reporting items \cite{monks2019} to the sections of this paper and to the released materials \cite{dataset}.
+\begin{table}[htbp]\centering
+\caption{STRESS-DES items and where they are reported.}\label{tab:stress}
+\footnotesize
+\begin{tabular}{@{}p{.27\linewidth}p{.68\linewidth}@{}}
+\toprule Item & Where reported\\\midrule
+1 Objectives & Section~\ref{sec:intro}: questions Q1--Q3; the model is for comparative evaluation of policies, not prediction for a specific building.\\
+2 Model logic & Section~\ref{sec:model}: event-driven lift group; events are passenger arrival, car arrival, doors open, transfer end, doors closed. Algorithm~\ref{alg:dcsp} for DCS-P.\\
+3 Scope and components & Section~\ref{sec:model}, Table~\ref{tab:buildings}: one group per building, single lobby, equal floor populations. Excluded: zoning, double-deck cars, batch arrivals, balking, parking policies other than lobby return.\\
+4 Data & Table~\ref{tab:buildings}, Section~\ref{sec:model}: typical design values, not measurements; illustrative values for the wheelchair-like profile.\\
+5 Assumptions & Sections~\ref{sec:demand}--\ref{sec:profiles}: Poisson arrivals, uniform floor choice, fixed transfer times, priority as an independent random label known without error.\\
+6 Initialisation & Section~\ref{sec:outcomes}: empty cars at the lobby at $t=0$; first 300~s excluded from the measured cohort; window sensitivity in Section~\ref{sec:res-agree}.\\
+7 Run length and replications & Section~\ref{sec:design}: 4,500~s per run; 20 replications per cell (10 in the supplementary experiments); common random numbers.\\
+8 Estimation & Section~\ref{sec:design}: capped means observed exactly by design; paired percentile bootstrap over replications.\\
+9 Software and random sampling & Section~\ref{sec:model}: Python 3.13, NumPy; \texttt{SeedSequence} keyed by building, scenario and replication, with separate streams for passengers and priority draws.\\
+10 Execution & Event heap with version-counter invalidation; parallel worker processes; run-level outputs as JSON lines.\\
+11 System & Two-core Linux machine; the main campaign took about 3.5 CPU hours.\\
+12 Code access & \url{https://github.com/alanvallavaraj/liftsim}; MIT licence (code), CC BY 4.0 (data).\\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\begin{longtable}{@{}p{.30\linewidth}p{.64\linewidth}@{}}
-\caption{STRESS-DES items and where they are reported.}\label{tab:stress}\\
-\toprule Item & Where reported\\\midrule\endhead
-\bottomrule\endlastfoot
-1 Objectives & Section~\ref{sec:intro}: questions on the cost of priority-first boarding, priority-aware destination control and agreement of waiting-time measures; model purpose is comparative evaluation, not prediction for a specific building.\\
-2 Model logic: base model overview & Section~\ref{sec:model}: event-driven lift group with passengers, landing queues, cars, doors and a group controller; event types are passenger arrival, car arrival at a floor, doors open, transfer end and doors closed.\\
-3 Model logic: scope and components & Section~\ref{sec:model} and Table~\ref{tab:buildings}: single lobby, equal floor populations, one group per building; excluded are zoning, double-deck cars, batch arrivals, passenger balking and parking policies other than lobby homing.\\
-4 Data: sources, pre-processing, input parameters & Table~\ref{tab:buildings}; Section~\ref{sec:model}: kinematic and door parameters are typical design values, not measurements from a specific installation; traffic mixes and load ratios are design assumptions.\\
-5 Data: assumptions & Sections~\ref{sec:model}--\ref{sec:design}: Poisson arrivals, uniform floor choice, fixed transfer time, priority as an independent random label; a wheelchair-like passenger takes three places and three times the transfer time.\\
-6 Experimentation: initialisation & Section~\ref{sec:design}: empty cars at the lobby at $t=0$; 300~s warm-up excluded from the measured cohort.\\
-7 Experimentation: run length, replications & Section~\ref{sec:design}: arrivals and observation to 4,500~s; 20 replications per situation; common random numbers across controllers and boarding rules.\\
-8 Experimentation: estimation approach & Section~\ref{sec:design}: restricted means fully observed by design; paired percentile bootstrap over replications.\\
-9 Implementation: software, random sampling & Section~\ref{sec:model}: Python 3.13 and NumPy; NumPy \texttt{SeedSequence} keyed by scenario and replication, with separate child streams for passengers and priority draws.\\
-10 Implementation: model execution & Event heap with version-counter invalidation; runs executed in parallel worker processes; run-level outputs written as JSON lines.\\
-11 Implementation: system specification & Commodity Linux machine; run times are recorded per run in the released data.\\
-12 Code access & Protocol, simulator, tests, campaign and analysis scripts released under the MIT licence; results under CC BY 4.0 \cite{dataset}.\\
-\end{longtable}
+\section{Plain-language summary and glossary}\label{app:plain}
+\renewcommand{\thetable}{B.\arabic{table}}\renewcommand{\theHtable}{B.\arabic{table}}\setcounter{table}{0}
+\paragraph{Summary} Some lift passengers, such as wheelchair users, may be allowed to enter a lift before other people. We built a computer model of lifts that works in seconds and checked it against the standard lift formula. We then tested the rule in many situations. With ordinary call buttons, the rule costs other people almost nothing when the lifts are not full, and a few seconds when they are just full; in busy periods it saves priority passengers a lot of time. With keypad systems, where each person is sent to one lift, the rule does nothing in normal operation. For these systems we tested a new rule in which the controller uses the priority label when it chooses the lift. Priority passengers then wait about one third less and others wait a few seconds more, but the new rule is costly when the building is overloaded for a long time. Passengers who need more space make everyone wait longer, much more than the boarding order does.
+
+\begin{table}[htbp]\centering
+\caption{Terms used in this paper.}\label{tab:glossary}
+\footnotesize
+\begin{tabular}{@{}p{.25\linewidth}p{.70\linewidth}@{}}
+\toprule Term & Meaning\\\midrule
+Lift group & Several cars that serve the same floors under one controller.\\
+Landing call & An up or down call registered at a landing.\\
+Destination control & Passengers enter their destination at the landing and are told which car to use.\\
+Round-trip time (RTT) & Time for a car to leave the lobby, deliver its passengers and return, in up-peak traffic.\\
+Handling capacity (HC5) & Number of passengers the group can carry in five minutes in up-peak traffic.\\
+Demand level $x$ & Arrival rate divided by the up-peak handling capacity; $x=1$ is the reference demand.\\
+Waiting time & Time from arrival at the landing until the doors of the boarded car begin to open.\\
+$R_{600}$ & Mean waiting time of all measured passengers, with waits above 600~s counted as 600~s.\\
+$\mathrm{AWT}_{\mathrm{s}}$ & Mean waiting time of the passengers served before observation ends.\\
+FCFS, PFB & First-come-first-served boarding; priority-first boarding.\\
+Place & The space of one standing passenger in the car.\\
+\bottomrule
+\end{tabular}
+\end{table}

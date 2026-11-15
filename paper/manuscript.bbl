@@ -25,16 +25,9 @@ M.-L. Siikonen, {Elevator traffic simulation}, Simulation 61~(4) (1993)
 \newblock \href {https://doi.org/10.1177/003754979306100409}
   {\path{doi:10.1177/003754979306100409}}.
 
-\bibitem{kim1995}
-C.~B. Kim, K.~A. Seong, H.~Lee-Kwang, J.~O. Kim, Y.~B. Lim, {A fuzzy approach
-  to elevator group control system}, IEEE Transactions on Systems, Man, and
-  Cybernetics 25 (1995) 985--990.
-\newblock \href {https://doi.org/10.1109/21.384263}
-  {\path{doi:10.1109/21.384263}}.
-
 \bibitem{crites1998}
 R.~H. Crites, A.~G. Barto, {Elevator group control using multiple reinforcement
-  learning agents}, Machine Learning 33 (1998) 235--262.
+  learning agents}, Machine Learning 33~(2--3) (1998) 235--262.
 \newblock \href {https://doi.org/10.1023/a:1007518724497}
   {\path{doi:10.1023/a:1007518724497}}.
 
@@ -50,17 +43,6 @@ J.~Wan, K.~Lee, H.~Shin, {Traffic pattern-aware elevator dispatching via deep
   reinforcement learning}, Advanced Engineering Informatics 61 (2024) 102497.
 \newblock \href {https://doi.org/10.1016/j.aei.2024.102497}
   {\path{doi:10.1016/j.aei.2024.102497}}.
-
-\bibitem{royston2013}
-P.~Royston, M.~K.~B. Parmar, {Restricted mean survival time: an alternative to
-  the hazard ratio for the design and analysis of randomized trials with a
-  time-to-event outcome}, BMC Medical Research Methodology 13 (2013) 152.
-\newblock \href {https://doi.org/10.1186/1471-2288-13-152}
-  {\path{doi:10.1186/1471-2288-13-152}}.
-
-\bibitem{law2015}
-A.~M. Law, Simulation Modeling and Analysis, 5th Edition, McGraw-Hill
-  Education, New York, 2015.
 
 \bibitem{en8170}
 {CEN}, {EN 81-70:2021+A1:2022}. safety rules for the construction and
@@ -79,18 +61,27 @@ W.~Han, A.~Y. Chen, N.-W. Chi, S.-H. Hsieh, {Elevator priority scheduling with
 \bibitem{kleinrock1965}
 L.~Kleinrock, {A conservation law for a wide class of queueing disciplines},
   Naval Research Logistics Quarterly 12~(2) (1965) 181--192.
-\newblock \href {https://doi.org/10.1002/nav.3800120206}
-  {\path{doi:10.1002/nav.3800120206}}.
 
 \bibitem{schrage1970}
-L.~Schrage, {An alternative proof of a conservation law for the queue G/G/1},
-  Operations Research 18~(1) (1970) 185--187.
+L.~Schrage, {Letter to the Editor -- An alternative proof of a conservation law
+  for the queue G/G/1}, Operations Research 18~(1) (1970) 185--187.
 \newblock \href {https://doi.org/10.1287/opre.18.1.185}
   {\path{doi:10.1287/opre.18.1.185}}.
 
+\bibitem{royston2013}
+P.~Royston, M.~K.~B. Parmar, {Restricted mean survival time: an alternative to
+  the hazard ratio for the design and analysis of randomized trials with a
+  time-to-event outcome}, BMC Medical Research Methodology 13 (2013) 152.
+\newblock \href {https://doi.org/10.1186/1471-2288-13-152}
+  {\path{doi:10.1186/1471-2288-13-152}}.
+
+\bibitem{law2015}
+A.~M. Law, Simulation Modeling and Analysis, 5th Edition, McGraw-Hill
+  Education, New York, 2015.
+
 \bibitem{dataset}
 A.~I.~B. Vallavaraj, {[dataset] liftsim: lift group simulator, test plan,
-  results and analysis programs for the priority boarding study},
+  results and analysis programs},
   \url{https://github.com/alanvallavaraj/liftsim} (2026).
 
 \bibitem{monks2019}
@@ -108,55 +99,6 @@ L.~Al-Sharif, H.~M. Aldahiyat, L.~M. Alkurdi, {The use of Monte Carlo
 \newblock \href {https://doi.org/10.1177/0143624411414837}
   {\path{doi:10.1177/0143624411414837}}.
 
-\bibitem{chu2003}
-S.~C.~K. Chu, C.~K.~Y. Lin, S.~S. Lam, {Hospital lift system simulator: A
-  performance evaluator--predictor}, European Journal of Operational Research
-  146 (2003) 156--180.
-\newblock \href {https://doi.org/10.1016/s0377-2217(02)00203-5}
-  {\path{doi:10.1016/s0377-2217(02)00203-5}}.
-
-\bibitem{miyamoto2008}
-T.~Miyamoto, S.~Yamaguchi, {MceSim: A multi-car elevator simulator}, IEICE
-  Transactions on Fundamentals of Electronics, Communications and Computer
-  Sciences E91-A~(11) (2008) 3207--3214.
-\newblock \href {https://doi.org/10.1093/ietfec/e91-a.11.3207}
-  {\path{doi:10.1093/ietfec/e91-a.11.3207}}.
-
-\bibitem{fernandez2014}
-J.~Fernandez, P.~Cortes, J.~Munuzuri, J.~Guadix, {Dynamic fuzzy logic elevator
-  group control system with relative waiting time consideration}, IEEE
-  Transactions on Industrial Electronics 61 (2014) 4912--4919.
-\newblock \href {https://doi.org/10.1109/tie.2013.2289867}
-  {\path{doi:10.1109/tie.2013.2289867}}.
-
-\bibitem{hamdi2007}
-M.~Hamdi, D.~J. Mulvaney, {Prioritised A* search in real-time elevator
-  dispatching}, Control Engineering Practice 15 (2007) 219--230.
-\newblock \href {https://doi.org/10.1016/j.conengprac.2006.06.005}
-  {\path{doi:10.1016/j.conengprac.2006.06.005}}.
-
-\bibitem{cortes2004}
-P.~Cort{\'e}s, J.~Larra{\~n}eta, L.~Onieva, {Genetic algorithm for controllers
-  in elevator groups: analysis and simulation during lunchpeak traffic},
-  Applied Soft Computing 4 (2004) 159--174.
-\newblock \href {https://doi.org/10.1016/j.asoc.2003.11.002}
-  {\path{doi:10.1016/j.asoc.2003.11.002}}.
-
-\bibitem{bolat2011}
-B.~Bolat, P.~Cort{\'e}s, {Genetic and tabu search approaches for optimizing the
-  hall call--car allocation problem in elevator group systems}, Applied Soft
-  Computing 11 (2011) 1792--1800.
-\newblock \href {https://doi.org/10.1016/j.asoc.2010.05.023}
-  {\path{doi:10.1016/j.asoc.2010.05.023}}.
-
-\bibitem{cortes2021}
-P.~Cort{\'e}s, J.~Mu{\~n}uzuri, A.~V{\'a}zquez-Ledesma, L.~Onieva, {Double deck
-  elevator group control systems using evolutionary algorithms: Interfloor and
-  lunchpeak traffic analysis}, Computers \& Industrial Engineering 155 (2021)
-  107190.
-\newblock \href {https://doi.org/10.1016/j.cie.2021.107190}
-  {\path{doi:10.1016/j.cie.2021.107190}}.
-
 \bibitem{wang2021}
 S.~Wang, X.~Gong, M.~Song, C.~Y. Fei, S.~Quaadgras, J.~Peng, P.~Zou, J.~Chen,
   W.~Zhang, R.~J. Jiao, {Smart dispatching and optimal elevator group control
@@ -169,10 +111,24 @@ S.~Wang, X.~Gong, M.~Song, C.~Y. Fei, S.~Quaadgras, J.~Peng, P.~Zou, J.~Chen,
 R.~Smith, R.~Peters, {ETD algorithm with destination dispatch and booster
   options}, Elevator World, July 2002 (2002).
 
+\bibitem{koehler2002}
+J.~Koehler, D.~Ottiger, {An AI-based approach to destination control in
+  elevators}, AI Magazine 23~(3) (2002) 59--78.
+\newblock \href {https://doi.org/10.1609/aimag.v23i3.1657}
+  {\path{doi:10.1609/aimag.v23i3.1657}}.
+
+\bibitem{tanaka2005}
+S.~Tanaka, Y.~Uraguchi, M.~Araki, {Dynamic optimization of the operation of
+  single-car elevator systems with destination hall call registration: Part I.
+  Formulation and simulations}, European Journal of Operational Research
+  167~(2) (2005) 550--573.
+\newblock \href {https://doi.org/10.1016/j.ejor.2004.04.038}
+  {\path{doi:10.1016/j.ejor.2004.04.038}}.
+
 \bibitem{sorsa2018}
 J.~Sorsa, H.~Ehtamo, J.-M. Kuusinen, M.~Ruokokoski, M.-L. Siikonen, {Modeling
   uncertain passenger arrivals in the elevator dispatching problem with
-  destination control}, Optimization Letters 12 (2018) 171--185.
+  destination control}, Optimization Letters 12~(1) (2018) 171--185.
 \newblock \href {https://doi.org/10.1007/s11590-017-1130-0}
   {\path{doi:10.1007/s11590-017-1130-0}}.
 
@@ -188,5 +144,11 @@ T.~Yamauchi, R.~Ide, T.~Sugawara, {Fair and effective elevator car dispatching
   Science 159 (2019) 455--464.
 \newblock \href {https://doi.org/10.1016/j.procs.2019.09.200}
   {\path{doi:10.1016/j.procs.2019.09.200}}.
+
+\bibitem{sargent2013}
+R.~G. Sargent, {Verification and validation of simulation models}, Journal of
+  Simulation 7~(1) (2013) 12--24.
+\newblock \href {https://doi.org/10.1057/jos.2012.20}
+  {\path{doi:10.1057/jos.2012.20}}.
 
 \end{thebibliography}

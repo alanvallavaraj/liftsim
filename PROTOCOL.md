@@ -57,3 +57,19 @@ Intervals: percentile bootstrap, 2,000 resamples of the 20 replications (paired)
 
 ## Stopping rule
 All runs are executed once. A run is repeated only if it fails technically.
+
+## Amendment 1 (after execution; pre-submission audit)
+During a pre-submission audit it was found that, under destination control with
+first-come-first-served boarding, passengers allocated to a car boarded in the order of
+their allocation to that car, not in order of arrival. The two orders differ only for
+passengers who were re-allocated after being left behind by a full car, which occurs only
+when destination control is saturated. Because priority-first boarding orders passengers by
+arrival time within each class, the contrast "priority-first minus FCFS" under destination
+control at saturated demand levels mixed the priority effect with this difference in order.
+The boarding rule was corrected to arrival order (liftsim/sim.py, `_board`), a test was
+added (tests/test_model.py), and the 2,640 destination-control FCFS runs of the campaign
+(DCS with FCFS-L and FCFS-W05) were re-executed on the same passenger streams. No other run
+is affected: all other runs produce identical results before and after the correction.
+The analyses were then recomputed. Aggregated effects with paired-bootstrap intervals
+(analyse_ci.py, 4,000 resamples, seed 20261116) were added in the same audit; the analyses
+A1-A3 are unchanged.

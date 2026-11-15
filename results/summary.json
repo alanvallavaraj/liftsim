@@ -3,7 +3,7 @@
  "scenarios": 66,
  "passenger_streams": 1320,
  "passengers_generated": 1944194,
- "cpu_seconds": 12763.482,
+ "cpu_seconds": 11824.082999999999,
  "A3": {
   "pairs": 660,
   "discordant": 1,

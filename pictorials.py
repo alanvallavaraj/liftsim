@@ -301,4 +301,4 @@ def fig_ramp():
 
 if __name__ == "__main__":
     fig_system(); print(fig_stop()); fig_boarding(); fig_window(); fig_ramp()
-    print(fig_trajectories()); fig_summary()
+    print(fig_trajectories())
