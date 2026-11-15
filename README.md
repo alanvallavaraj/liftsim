@@ -20,7 +20,9 @@ passengers and of a priority-aware destination control rule".
 - `analyse.py`, `analyse_ci.py`, `analyse_supplement.py` -> `results/*.csv`
 - `figures.py`, `pictorials.py` -> `figures/*.pdf`; `make_tables.py` -> `paper/tables/`
 - `results_v1/` superseded first campaign, kept as a record (see PROTOCOL.md)
-- `paper/` LaTeX source of the manuscript
+- `paper/` LaTeX source of the manuscript (`manuscript.tex`), supplementary material
+  (`supplementary.tex`), title page, highlights and cover letter
+- `REVISION_REPORT.md`, `FINAL_CHECK.md` audit records
 
 ## Quick start
 ```

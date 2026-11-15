@@ -22,27 +22,3 @@ Table~\ref{tab:stress} maps the STRESS-DES items \cite{monks2019} to this paper 
 \bottomrule
 \end{tabular}
 \end{table}
-
-\section{Plain-language summary and glossary}\label{app:plain}
-\renewcommand{\thetable}{B.\arabic{table}}\renewcommand{\theHtable}{B.\arabic{table}}\setcounter{table}{0}
-\paragraph{Summary} Some lift passengers, such as wheelchair users, may be allowed to enter a lift before other people. We built a computer model of lifts that works in seconds and checked it against the standard lift formula. We then tested the rule in many situations. With ordinary call buttons, the rule costs other people almost nothing when the lifts are not full, and a few seconds when they are just full; in busy periods it saves priority passengers a lot of time. With keypad systems, where each person is sent to one lift, the rule does nothing in normal operation. For these systems we tested a new rule in which the controller uses the priority label when it chooses the lift. Priority passengers then wait about one third less and others wait a few seconds more, but the new rule is costly when the building is overloaded for a long time. Passengers who need more space make everyone wait longer, much more than the boarding order does.
-
-\begin{table}[htbp]\centering
-\caption{Terms used in this paper.}\label{tab:glossary}
-\footnotesize
-\begin{tabular}{@{}p{.25\linewidth}p{.70\linewidth}@{}}
-\toprule Term & Meaning\\\midrule
-Lift group & Several cars that serve the same floors under one controller.\\
-Landing call & An up or down call registered at a landing.\\
-Destination control & Passengers enter their destination at the landing and are told which car to use.\\
-Round-trip time (RTT) & Time for a car to leave the lobby, deliver its passengers and return, in up-peak traffic.\\
-Handling capacity (HC5) & Number of passengers the group can carry in five minutes in up-peak traffic.\\
-Demand level $x$ & Arrival rate divided by the up-peak handling capacity; $x=1$ is the reference demand.\\
-Waiting time & Time from arrival at the landing until the doors of the boarded car begin to open.\\
-$R_{600}$ & Mean waiting time of all measured passengers, with waits above 600~s counted as 600~s.\\
-$\mathrm{AWT}_{\mathrm{s}}$ & Mean waiting time of the passengers served before observation ends.\\
-FCFS, PFB & First-come-first-served boarding; priority-first boarding.\\
-Place & The space of one standing passenger in the car.\\
-\bottomrule
-\end{tabular}
-\end{table}
