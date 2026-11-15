@@ -1,0 +1,8 @@
+load,pairs,AWT_served_vs_R600.discordant,AWT_served_vs_R600.resolved,R600_served_vs_R600.discordant,R600_served_vs_R600.resolved,AWT_completed_vs_R600.discordant,AWT_completed_vs_R600.resolved,AWT_served_vs_R300.discordant,AWT_served_vs_R300.resolved,AWT_served_vs_R900.discordant,AWT_served_vs_R900.resolved,R300_vs_R900.discordant,R300_vs_R900.resolved,R600.resolved_pairs
+0.5,54,0,0,0,0,0,0,0,0,0,0,0,0,49
+0.7,54,0,0,0,0,0,0,0,0,0,0,0,0,48
+0.85,54,0,0,0,0,0,0,0,0,0,0,0,0,45
+1.0,54,0,0,0,0,0,0,0,0,0,0,0,0,47
+1.15,54,0,0,0,0,0,0,2,0,0,0,2,0,48
+1.3,54,3,0,1,0,3,0,8,1,0,0,8,1,45
+1.5,54,4,1,6,0,4,1,14,5,3,1,11,4,46

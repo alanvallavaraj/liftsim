@@ -1,0 +1,13 @@
+{
+ "runs": 31680,
+ "scenarios": 66,
+ "passenger_streams": 1320,
+ "passengers_generated": 1944194,
+ "cpu_seconds": 12763.482,
+ "A3": {
+  "pairs": 660,
+  "discordant": 1,
+  "resolved": 0,
+  "R600_resolved_pairs": 566
+ }
+}

@@ -1,0 +1,13 @@
+Dear Editor,
+
+Please consider the manuscript "Priority boarding in lift groups: its cost to other passengers and a priority-aware destination control rule" for publication in Simulation Modelling Practice and Theory.
+
+The paper contributes to simulation methodology and application in vertical transportation. It presents an open, seconds-based discrete-event lift simulator validated against the classical up-peak round-trip-time calculation (agreement within 2%), and a paired experimental design (31,680 runs with common random numbers) in which every measured passenger is followed for a fixed minimum period, so that an all-arrival restricted mean waiting time is fully observed. It reports: (1) the cost and benefit of priority-first boarding for passengers with accessibility needs, for five group controllers, under steady and time-varying demand, including passengers who need more space and time; (2) the finding that priority at the door has no effect under destination control up to handling capacity, and a new priority-aware allocation rule that reduces priority passengers' waiting by 30-43% in normal operation; and (3) a check that the conventional served-passenger average ranks controllers like the restricted mean. The paper is written in plain language with explanatory diagrams so that practitioners can follow it.
+
+The protocol was fixed before execution, and the simulator, tests, run-level results and analysis scripts are publicly archived. The model is reported following the STRESS-DES guidelines.
+
+The manuscript is original, is not under consideration elsewhere, and has a single author with no competing interests.
+
+Yours sincerely,
+Alan Immanuel Benjamin Vallavaraj
+University of Westminster

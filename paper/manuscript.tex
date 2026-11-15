@@ -1,0 +1,40 @@
+\documentclass[preprint,12pt]{elsarticle}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,booktabs,longtable,array,graphicx,xurl,enumitem}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\usepackage{microtype}
+\usepackage{geometry}
+\geometry{margin=24mm}
+\setlength{\emergencystretch}{3em}
+\journal{Simulation Modelling Practice and Theory}
+\begin{document}
+\begin{frontmatter}
+\title{Priority boarding in lift groups: its cost to other passengers and a priority-aware destination control rule}
+\author{Alan Immanuel Benjamin Vallavaraj (\texttt{a.vallavaraj@westminster.ac.uk})}
+\address{University of Westminster, London, United Kingdom}
+\begin{abstract}
+Some lift passengers, such as wheelchair users, should board before other people. This study measures what such a priority rule costs the other passengers, and proposes a way to make it work under destination control. We built an open lift simulator that works in seconds, with real car movement, door times and boarding times; its round-trip times agree with the classical formula within 2\%. Five group controllers, two boarding rules and two kinds of priority passenger were compared in 31,680 runs with identical passengers, for three buildings, steady demand from 50\% to 130\% of handling capacity and demand that rises and falls. Every counted passenger was watched for at least 900~s, so the average wait of all passengers, capped at 600~s, is exact. With call buttons, priority-first boarding costs other passengers at most 3.3~s below capacity and 1.8~s on average at capacity, where priority passengers gain 9.3~s; at 115\% of capacity the gain is 81~s and the cost 14~s. Wheelchair-like passengers, who take three places and board slowly, lower capacity for everyone, an effect several times larger than that of the boarding order. Under destination control, priority at the door has no effect up to capacity, because each passenger can board only one car. A new priority-aware rule that uses the priority label when choosing the car cuts the wait of priority passengers by 30\% to 43\% in normal operation, at a cost of 1 to 4~s for others, but is expensive in heavy overload. The usual average over served passengers ranks the controllers like the capped average in 659 of 660 comparisons.
+\end{abstract}
+\begin{keyword}lift group control \sep discrete-event simulation \sep handling capacity \sep restricted mean waiting time \sep priority boarding \sep accessibility\end{keyword}
+\end{frontmatter}
+
+\input{body}
+
+\section*{Data and code availability}
+The protocol, simulator, automated tests, campaign and analysis scripts, run-level results for all 31,680 runs, contrast tables and figures are archived in a public repository with a persistent identifier \cite{dataset}; \url{https://github.com/alanvallavaraj/liftsim}. Code is released under the MIT licence and data under the Creative Commons Attribution 4.0 licence. All records are synthetic simulation outputs; no human-participant data were collected.
+
+\section*{Funding}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
+
+\section*{Declaration of competing interests}
+The author declares no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\section*{Declaration of generative AI and AI-assisted technologies}
+%% DRAFT FOR THE AUTHOR TO REVIEW AND EDIT BEFORE SUBMISSION.
+During the preparation of this work the author used Claude (Anthropic) to assist with implementing the simulator, running the simulation campaign and analysis scripts, and drafting and editing the manuscript. The author reviewed and verified the code, results and text, edited the content as needed, and takes full responsibility for the content of the publication.
+
+\bibliographystyle{elsarticle-num}\bibliography{references}
+\clearpage\appendix
+\input{appendix}
+\end{document}

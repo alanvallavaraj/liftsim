@@ -1,0 +1,7 @@
+Highlights
+
+- Open lift group simulator matches the classical round-trip time to within 2%
+- With call buttons, priority boarding costs others at most 3.3 s below capacity
+- With destination control, door priority has no effect up to handling capacity
+- New priority-aware allocation cuts priority waits by 30-43% in normal operation
+- Wheelchair space needs lower capacity far more than the boarding order does
