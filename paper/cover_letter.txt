@@ -1,13 +1,24 @@
-Dear Editor,
+Dear Editor-in-Chief,
 
-Please consider the manuscript "Priority boarding in lift group control: a simulation study of its cost to other passengers and of a priority-aware destination control rule" for publication in Simulation Modelling Practice and Theory.
+Please consider the enclosed manuscript, "Priority boarding in lift group control: a simulation study of its cost to other passengers and of a priority-aware destination control rule", for publication as a research paper in Building Services Engineering Research and Technology.
 
-The paper contributes to simulation methodology and its application to vertical transportation. It presents an open, seconds-based discrete-event lift simulator, verified by automated tests and checked against the classical up-peak round-trip-time calculation (agreement within 2%), and a paired experimental design (31,680 runs with common random numbers) in which every measured passenger is followed for a fixed minimum period, so that a capped mean waiting time over all arrivals is observed exactly. It reports (1) the cost and benefit of priority-first boarding for passengers with access requirements under five group controllers, steady and time-varying demand and two passenger profiles, with paired-bootstrap intervals; (2) the finding that priority at the door has no measurable effect under destination control until it saturates, together with a fully specified priority-aware allocation rule, its benefit in normal operation and its cost under sustained overload; and (3) a check that the conventional served-passenger average ranks controllers like the capped mean.
+Passengers with access requirements, such as wheelchair users, may be given priority when boarding a lift. Lift designers and building operators have, to my knowledge, no published figures for what this costs the other passengers, or for whether the policy works with destination control. The manuscript answers both questions with an open discrete-event simulator of a lift group. The simulator is verified by automated tests and agrees with the classical up-peak round-trip time within 2%. Five group controllers, two boarding rules and two priority-passenger profiles are compared in 31,680 paired runs.
 
-The limitations are stated plainly: the model is validated analytically, not against measured building data, and the controllers are transparent implementations of published principles. The test plan, simulator, tests, run-level results and analysis programs are public at https://github.com/alanvallavaraj/liftsim, and the model is reported following the STRESS-DES guidelines.
+The findings that matter for practice are:
 
-The manuscript is original, is not under consideration elsewhere, and has a single author with no competing interests. Generative AI tools were used as declared in the manuscript.
+- With landing-call control, priority-first boarding costs other passengers 1.8 s on average at the up-peak handling capacity and saves priority passengers 9.3 s. The cost grows only in heavily loaded periods.
+- With destination control, priority at the door has no measurable effect in normal operation. The priority label has to be used when cars are allocated, and the paper specifies and tests a rule that does this.
+- Passengers who need more space reduce handling capacity for everyone by more than boarding order changes any wait, so capacity planning should count them in places, not persons.
 
-Yours sincerely,
+I believe the paper suits the journal because it builds directly on lift traffic analysis published here (Al-Sharif et al., 2012, on the up-peak round-trip time) and on CIBSE Guide D, and because its conclusions are addressed to lift designers and building operators. The model is reported following the STRESS-DES guidelines, and all code, tests and run-level results are public at https://github.com/alanvallavaraj/liftsim.
+
+I confirm that the manuscript is original, has not been published and is not under consideration by another journal. A preprint of this work is posted on Preprints.org (manuscript ID preprints-244585); its DOI is entered in the submission system. I am the sole author. The work received no funding, I have no conflicting interests, and no human participants were involved. The use of generative AI tools is declared in the manuscript.
+
+The manuscript has about 7,700 words, 10 figures and 11 tables. A plain-language summary and a glossary are provided as supplementary material.
+
+Thank you for considering this submission.
+
+Yours faithfully,
 Alan Immanuel Benjamin Vallavaraj
-University of Westminster
+University of Westminster, London, United Kingdom
+a.vallavaraj@westminster.ac.uk
