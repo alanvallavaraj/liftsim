@@ -12,7 +12,7 @@ The findings that matter for practice are:
 
 I believe the paper suits the journal because it builds directly on lift traffic analysis published here (Al-Sharif et al., 2012, on the up-peak round-trip time) and on CIBSE Guide D, and because its conclusions are addressed to lift designers and building operators. The model is reported following the STRESS-DES guidelines, and all code, tests and run-level results are public at https://github.com/alanvallavaraj/liftsim.
 
-I confirm that the manuscript is original, has not been published and is not under consideration by another journal. A preprint of this work is posted on Preprints.org (manuscript ID preprints-244585); its DOI is entered in the submission system. I am the sole author. The work received no funding, I have no conflicting interests, and no human participants were involved. The use of generative AI tools is declared in the manuscript.
+I confirm that the manuscript is original, has not been published and is not under consideration by another journal. A preprint of this work was posted on Preprints.org on 18 November 2026 (https://doi.org/10.20944/preprints202611.1795.v1). I am the sole author. The work received no funding, I have no conflicting interests, and no human participants were involved. The use of generative AI tools is declared in the manuscript.
 
 The manuscript has about 7,700 words, 10 figures and 11 tables. A plain-language summary and a glossary are provided as supplementary material.
 
